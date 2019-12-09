@@ -39,7 +39,7 @@
 					<li class="nav-item">
 						<a class="nav-link" href="pie-chart.html">Pie Charts</a>
 					</li>
-                    <li class="nav-item active">
+					<li class="nav-item active">
 						<a class="nav-link" href="line-graphs.html">Line Graphs</a>
 					</li>
 				</ul>
@@ -50,7 +50,7 @@
 		<div class="row">
 			<div class="col-12 justify-content-center">
 				<h1>Line Graphs with DC and Crossfilter</h1>
-				<div id="per-person-chart"></div>
+				<div id="chart-here"></div>
 			</div>
 		</div>
 		<div class="row">
@@ -91,34 +91,24 @@
         function makeGraphs(error, transactionsData) {
             var ndx = crossfilter(transactionsData);
 
-            var name_dim = ndx.dimension(dc.pluck('name'));
-            var total_spend_per_person = name_dim.group().reduceSum(dc.pluck('spend'));
-        dc.pieChart('#per-person-chart')
-            .width(330)
-            .height(90)
-            .transitionDuration(1500)
-            .dimension(name_dim)
-            .group(total_spend_per_person)
-            
-            
-            var store_dim = ndx.dimension(dc.pluck('store'));
-            var total_spend_per_store = store_dim.group().reduceSum(dc.pluck('spend'));
-        dc.pieChart('#per-store-chart')
-            .width(330)
-            .height(90)
-            .transitionDuration(1500)
-            .dimension(name_dim)
-            .group(total_spend_per_store)
-            
-
-        var state_dim = ndx.dimension(dc.pluck('state'));
-            var total_spend_per_state = state_dim.group().reduceSum(dc.pluck('spend'));
-        dc.pieChart('#per-state-chart')
-            .width(330)
-            .height(90)
-            .transitionDuration(1500)
-            .dimension(state_dim)
-            .group(total_spend_per_state)
+            var parseDate = d3.time.format("%d/%m/%Y").parse;
+        transactionsData.forEach(function(d){
+            d.date = parseDate(d.date);
+        });
+        var date_dim = ndx.dimension(dc.pluck('date'));
+        var total_spend_per_date = date_dim.group().reduceSum(dc.pluck('spend'));
+        var minDate = date_dim.bottom(1)[0].date;
+        var maxDate = date_dim.top(1)[0].date;
+        dc.lineChart("#chart-here")
+            .width(1000)
+            .height(300)
+            .margins({top: 10, right: 50, bottom: 30, left: 50})
+            .dimension(date_dim)
+            .group(total_spend_per_date)
+            .transitionDuration(500)
+            .x(d3.time.scale().domain([minDate,maxDate]))
+            .xAxisLabel("Month")
+            .yAxis().ticks(4);
             
         dc.renderAll();
         }
