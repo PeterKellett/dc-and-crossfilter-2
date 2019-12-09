@@ -39,11 +39,12 @@
 					<li class="nav-item">
 						<a class="nav-link" href="pie-chart.html">Pie Charts</a>
 					</li>
-					<li class="nav-item active">
+					<li class="nav-item">
 						<a class="nav-link" href="line-graphs.html">Line Graphs</a>
 					</li>
-                    <li class="nav-item">
+                    <li class="nav-item active">
 						<a class="nav-link" href="composite-graphs.html">Composite Graphs</a>
+					</li>
 				</ul>
 			</div>
 		</nav>
@@ -52,12 +53,12 @@
 		<div class="row">
 			<div class="col-12 justify-content-center">
 				<h1>Line Graphs with DC and Crossfilter</h1>
-				<div id="line-graph"></div>
+				<div id="composite-chart"></div>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col-12">
-				<h3>Line Graph</h3>
+				<h3>Composite Graph</h3>
 			</div>
 		</div>
 
@@ -89,38 +90,52 @@
 	queue()
         .defer(d3.json, "data/transactions.json")
         .await(makeGraphs);
-
     function makeGraphs(error, transactionsData) {
-
         var ndx = crossfilter(transactionsData);
-
         var parseDate = d3.time.format("%d/%m/%Y").parse;
         transactionsData.forEach(function(d){
             d.date = parseDate(d.date);
         });
-
         var date_dim = ndx.dimension(dc.pluck('date'));
-        var total_spend_per_date = date_dim.group().reduceSum(dc.pluck('spend'));
         var minDate = date_dim.bottom(1)[0].date;
         var maxDate = date_dim.top(1)[0].date;
-
-        
-
-        dc.lineChart("#line-graph")
-            .width(1000)
-            .height(300)
-            .margins({top: 10, right: 50, bottom: 30, left: 50})
-            .dimension(date_dim)
-            .group(total_spend_per_date)
-            .transitionDuration(500)
-            .x(d3.time.scale().domain([minDate,maxDate]))
-            .xAxisLabel("Month")
-            .yAxis().ticks(4);
-            
-        dc.renderAll();
+        function spend_by_name(name) {
+            return function(d) {
+                if (d.name === name) {
+                    return +d.spend;
+                } else {
+                    return 0;
+                }
+            }
         }
-
+        var tomSpendByMonth = date_dim.group().reduceSum(spend_by_name('Tom'));
+        var bobSpendByMonth = date_dim.group().reduceSum(spend_by_name('Bob'));
         
+        var aliceSpendByMonth = date_dim.group().reduceSum(spend_by_name('Alice'));
+        var compositeChart = dc.compositeChart('#composite-chart');
+        compositeChart
+            .width(990)
+            .height(200)
+            .dimension(date_dim)
+            .x(d3.time.scale().domain([minDate, maxDate]))
+            .yAxisLabel("Spend")
+            .legend(dc.legend().x(80).y(20).itemHeight(13).gap(5))
+            .renderHorizontalGridLines(true)
+            .compose([
+                dc.lineChart(compositeChart)
+                    .colors('green')
+                    .group(tomSpendByMonth, 'Tom'),
+                dc.lineChart(compositeChart)
+                    .colors('red')
+                    .group(bobSpendByMonth, 'Bob'),
+                dc.lineChart(compositeChart)
+                    .colors('blue')
+                    .group(aliceSpendByMonth, 'Alice')
+            ])
+            .brushOn(false)
+            .render();
+        dc.renderAll();
+    }
         
 	</script>
 </body>
