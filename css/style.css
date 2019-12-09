@@ -1,4 +1,6 @@
 .intro {
     background: url("/images/jamie-esker-celtic.jpg");
-    background-size: cover;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position-y: center;
 };
