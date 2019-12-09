@@ -45,8 +45,35 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-12 justify-content-center">
-				<h1>Intro to DC and Crossfilter</h1>
-				<div id="chart-here"></div>
+				<h1>Multiple Charts with DC and Crossfilter</h1>
+				<div id="per-person-chart"></div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<h3>Total Spend Per Person</h3>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-12 justify-content-center">
+				<div id="per-store-chart"></div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<h3>Total Spend Per Store</h3>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-12 justify-content-center">
+				<div id="per-state-chart"></div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<h3>Total Spend Per State</h3>
 			</div>
 		</div>
 	</div>
@@ -64,9 +91,11 @@
             {"name": "Alice", "store": "Big Co.", "state": "NY", "spend": 350},
         ];
         var ndx = crossfilter(transactionsData);
+
         var name_dim = ndx.dimension(dc.pluck('name'));
         var total_spend_per_person = name_dim.group().reduceSum(dc.pluck('spend'));
-        dc.barChart('#chart-here')
+
+        dc.barChart('#per-person-chart')
             .width(300)
             .height(150)
             .margins({top: 10, right: 50, bottom: 30, left: 50})
@@ -78,6 +107,36 @@
             .xAxisLabel("Person")
             .yAxis().ticks(4);
         
+        var store_dim = ndx.dimension(dc.pluck('store'));
+        var total_spend_per_store = store_dim.group().reduceSum(dc.pluck('spend'));
+
+        dc.barChart('#per-store-chart')
+            .width(300)
+            .height(150)
+            .margins({top: 10, right: 50, bottom: 30, left: 50})
+            .dimension(store_dim)
+            .group(total_spend_per_store)
+            .transitionDuration(500)
+            .x(d3.scale.ordinal())
+            .xUnits(dc.units.ordinal)
+            .xAxisLabel("Store")
+            .yAxis().ticks(4);
+
+        var state_dim = ndx.dimension(dc.pluck('state'));
+        var total_spend_per_state = state_dim.group().reduceSum(dc.pluck('spend'));
+
+        dc.barChart('#per-state-chart')
+            .width(300)
+            .height(150)
+            .margins({top: 10, right: 50, bottom: 30, left: 50})
+            .dimension(state_dim)
+            .group(total_spend_per_state)
+            .transitionDuration(500)
+            .x(d3.scale.ordinal())
+            .xUnits(dc.units.ordinal)
+            .xAxisLabel("State")
+            .yAxis().ticks(4);
+            
         dc.renderAll();
 	</script>
 </body>
