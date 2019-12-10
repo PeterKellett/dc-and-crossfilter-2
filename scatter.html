@@ -42,13 +42,13 @@
 					<li class="nav-item">
 						<a class="nav-link" href="line-graphs.html">Line</a>
 					</li>
-                    <li class="nav-item active">
+                    <li class="nav-item">
 						<a class="nav-link" href="composite-graphs.html">Composite</a>
 					</li>
                     <li class="nav-item">
 						<a class="nav-link" href="stacked.html">Stacked</a>
 					</li>
-                    <li class="nav-item">
+                    <li class="nav-item active">
 						<a class="nav-link" href="scatter.html">Scatterplot</a>
 					</li>
 				</ul>
@@ -58,13 +58,13 @@
 	<div class="container">
 		<div class="row justify-content-center">
 			<div class="col-12 text-center">
-				<h1>Composite Graph with DC and Crossfilter</h1>
-				<div id="composite-chart"></div>
+				<h1>Scatterplot Graph with DC and Crossfilter</h1>
+				<div id="scatter-plot"></div>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col-12 text-center">
-				<h3>Composite Graph</h3>
+				<h3>Scatterplot Graph</h3>
 			</div>
 		</div>
 	</div>
@@ -80,47 +80,38 @@
         transactionsData.forEach(function(d){
             d.date = parseDate(d.date);
         });
-        var date_dim = ndx.dimension(dc.pluck('date'));
-        var minDate = date_dim.bottom(1)[0].date;
-        var maxDate = date_dim.top(1)[0].date;
-        function spend_by_name(name) {
-            return function(d) {
-                if (d.name === name) {
-                    return +d.spend;
-                } else {
-                    return 0;
-                }
-            }
-        }
-        var tomSpendByMonth = date_dim.group().reduceSum(spend_by_name('Tom'));
-        var bobSpendByMonth = date_dim.group().reduceSum(spend_by_name('Bob'));
-        
-        var aliceSpendByMonth = date_dim.group().reduceSum(spend_by_name('Alice'));
-        var compositeChart = dc.compositeChart('#composite-chart');
-        compositeChart
-            .width(990)
-            .height(200)
-            .dimension(date_dim)
+        var dateDim = ndx.dimension(function(d){
+            return d.date;
+        });
+        var tradeColors = d3.scale.ordinal()
+            .domain(["Alice", "Tom", "Bob"])
+            .range(["red", "green", "blue"]);
+        var minDate = dateDim.bottom(1)[0].date;
+        var maxDate = dateDim.top(1)[0].date;
+        var spendDim = ndx.dimension(function(d){
+            return [d.date, d.spend, d];
+        });
+        var spendGroup = spendDim.group();
+        var spend_chart = dc.scatterPlot("#scatter-plot");
+        spend_chart
+            .width(768)
+            .height(480)
             .x(d3.time.scale().domain([minDate, maxDate]))
-            .yAxisLabel("Spend")
-            .legend(dc.legend().x(80).y(20).itemHeight(13).gap(5))
-            .renderHorizontalGridLines(true)
-            .compose([
-                dc.lineChart(compositeChart)
-                    .colors('green')
-                    .group(tomSpendByMonth, 'Tom'),
-                dc.lineChart(compositeChart)
-                    .colors('red')
-                    .group(bobSpendByMonth, 'Bob'),
-                dc.lineChart(compositeChart)
-                    .colors('blue')
-                    .group(aliceSpendByMonth, 'Alice')
-            ])
             .brushOn(false)
-            .render();
+            .symbolSize(8)
+            .clipPadding(10)
+            .yAxisLabel("Amount Spent")
+            .title(function (d) {
+                return d.key[2].name + " spent " + d.key[2].spend + " in store " + d.key[2].store;
+            })
+            .colorAccessor(function (d) {
+                return d.key[2].name;
+            })
+            .colors(tradeColors)
+            .dimension(spendDim)
+            .group(spendGroup);
         dc.renderAll();
     }
-        
 	</script>
 </body>
 
