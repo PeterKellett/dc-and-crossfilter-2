@@ -16,6 +16,7 @@
 	</script>
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.8/dc.js"></script>
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3-queue/1.0.7/d3-queue.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
@@ -66,7 +67,7 @@
 			</div>
 			<div class="col-6">
 				<div class="row">
-					<div id="per-person-chart"></div>
+					<div id="stacked-chart"></div>
                     <h3>Total Games Per Person</h3>
 					<h5>Total Spend Per Person</h5>
 				</div>
@@ -96,18 +97,31 @@
         function makeGraphs(error, transactionsData) {
             var ndx = crossfilter(transactionsData);
             var name_dim = ndx.dimension(dc.pluck('name'));
-            var total_spend_per_person = name_dim.group().reduceSum(dc.pluck('spend'));
-        dc.barChart('#per-person-chart')
+            var spendByNameStoreA = name_dim.group().reduceSum(function (d) {
+            if (d.store === 'A') {
+                return +d.spend;
+            } else {
+                return 0;
+            }
+        });
+        var spendByNameStoreB = name_dim.group().reduceSum(function (d) {
+            if (d.store === 'B') {
+                return +d.spend;
+            } else {
+                return 0;
+            }
+        });
+        var stackedChart = dc.barChart("#stacked-chart");
+        stackedChart
             .width(300)
             .height(150)
-            .margins({top: 10, right: 50, bottom: 30, left: 50})
             .dimension(name_dim)
-            .group(total_spend_per_person)
-            .transitionDuration(500)
+            .group(spendByNameStoreA, "Store A")
+            .stack(spendByNameStoreB, "Store B")
             .x(d3.scale.ordinal())
             .xUnits(dc.units.ordinal)
-            .xAxisLabel("Person")
-            .yAxis().ticks(4);
+            .legend(dc.legend().x(420).y(0).itemHeight(15).gap(5));
+        stackedChart.margins().right = 100;
         
         var store_dim = ndx.dimension(dc.pluck('store'));
         var total_spend_per_store = store_dim.group().reduceSum(dc.pluck('spend'));
