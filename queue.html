@@ -66,6 +66,17 @@
 			<div class="col-6 intro">
 			</div>
 			<div class="col-6">
+
+                <div class="row">
+					<div id="count-chart"></div>
+				</div>
+				<div class="row">
+					<h3>Count Games Per Person</h3>
+				</div>
+				<div class="row">
+					<h5>New count chart</h5>
+				</div>
+
 				<div class="row">
 					<div id="stacked-chart"></div>
 				</div>
@@ -102,6 +113,26 @@
 
         function makeGraphs(error, transactionsData) {
             var ndx = crossfilter(transactionsData);
+
+            //Count Chart
+            var game_count = ndx.dimension(dc.dataCount("name"));
+            var gamesPerPerson = game_count.group().reduceSum(dc.dataCount("name"));
+            var countChart = dc.barChart("#count-chart");
+            countChart              
+                .width(300)
+                .height(150)
+                .margins({top: 10, right: 50, bottom: 30, left: 50})
+                .dimension(game_count)
+                .group(gamesPerPerson)
+                .transitionDuration(500)
+                .x(d3.scale.ordinal())
+                .xUnits(dc.units.ordinal)
+                .xAxisLabel("Store")
+                .yAxis().ticks(4);
+
+
+
+            //Stacked chart
             var name_dim = ndx.dimension(dc.pluck('name'));
             var spendByNameStoreA = name_dim.group().reduceSum(function (d) {
             if (d.store === 'A') {
